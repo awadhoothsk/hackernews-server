@@ -1,4 +1,3 @@
-
 import { Hono } from "hono";
 import {
   signUpWithUsernameAndPassword,
@@ -7,7 +6,7 @@ import {
 import {
   SignUpWithUsernameAndPasswordErrorCode,
   LogInWithUsernameAndPasswordErrorCode,
-} from "../controllers/authentication/authentication-types.js";
+} from "../controllers/authentication/auntentication-types.js";
 
 export const authenticationRoutes = new Hono();
 
