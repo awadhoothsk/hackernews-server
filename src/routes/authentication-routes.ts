@@ -1,20 +1,15 @@
 import { Hono } from "hono";
-import {
-  signUpWithUsernameAndPassword,
-  logInWithUsernameAndPassword,
-} from "../controllers/authentication/authentication-index.js";
-import {
-  SignUpWithUsernameAndPasswordErrorCode,
-  LogInWithUsernameAndPasswordErrorCode,
-} from "../controllers/authentication/auntentication-types.js";
+import { logInWithUsernameAndPassword, signUpWithUsernameAndpassword } from "../controllers/authentication/authentication-index.js";
+import { LogInWithUsernameAndPasswordError, SignUpWithUsernameAndPasswordError } from "../controllers/authentication/authentication-types.js";
 
-export const authenticationRoutes = new Hono();
+
+export const  authenticationRoutes = new Hono();
 
 authenticationRoutes.post("/sign-up", async (context) => {
   const { username, password } = await context.req.json();
 
   try {
-    const result = await signUpWithUsernameAndPassword({
+    const result = await signUpWithUsernameAndpassword({
       username,
       password,
     });
@@ -26,28 +21,29 @@ authenticationRoutes.post("/sign-up", async (context) => {
       201
     );
   } catch (e) {
-    if (e === SignUpWithUsernameAndPasswordErrorCode.CONFLICTING_USERNAME) {
+    if (e === SignUpWithUsernameAndPasswordError.CONFLICTING_USERNAME) {
       return context.json(
         {
-          message: "Username already exists",
+          message: "User name already exists",
         },
         409
       );
     }
 
-    return context.json(
-      {
-        mesage: "Unknown",
-      },
-      500
-    );
+    if (e === SignUpWithUsernameAndPasswordError.UNKNOWN) {
+      return context.json(
+        {
+          message: "Unknown",
+        },
+        500
+      );
+    }
   }
 });
 
 authenticationRoutes.post("/log-in", async (context) => {
   try {
     const { username, password } = await context.req.json();
-
     const result = await logInWithUsernameAndPassword({
       username,
       password,
@@ -61,7 +57,7 @@ authenticationRoutes.post("/log-in", async (context) => {
     );
   } catch (e) {
     if (
-      e === LogInWithUsernameAndPasswordErrorCode.INCORRECT_USERNMAE_OR_PASSWORD
+      e === LogInWithUsernameAndPasswordError.INCORRECT_USERNAME_OR_PASSWORD
     ) {
       return context.json(
         {
@@ -70,7 +66,6 @@ authenticationRoutes.post("/log-in", async (context) => {
         401
       );
     }
-
     return context.json(
       {
         message: "Unknown",

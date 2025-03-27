@@ -1,10 +1,12 @@
 import { Hono } from "hono";
-import { tokenMiddleware } from "./middelwares/token-middelware.js";
+import { tokenMiddleware } from "./middlewares/token-middleware";
 
 export const commentsRoutes = new Hono();
 
-commentsRoutes.get("/on/:postId", async (context) => {
+commentsRoutes.get("/on/:postId",tokenMiddleware, async (context) => {
+  const userId = context.get("userId");
   const postId = context.req.param("postId");
+  
 });
 
 commentsRoutes.post("/on/:postId", tokenMiddleware, async (context) => {
