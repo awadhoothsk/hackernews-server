@@ -1,22 +1,45 @@
 import { Hono } from "hono";
-import { logInWithUsernameAndPassword, signUpWithUsernameAndpassword } from "../controllers/authentication/authentication-index.js";
-import { LogInWithUsernameAndPasswordError, SignUpWithUsernameAndPasswordError } from "../controllers/authentication/authentication-types.js";
+import {
+  logInWithUsernameAndPassword,
+  signUpWithUsernameAndPassword,
+} from "../controllers/authentication/authentication-controller";
+import {
+  LogInWtihUsernameAndPasswordError,
+  SignUpWithUsernameAndPasswordError,
+} from "../controllers/authentication/authentication-types";
 
+export const authenticationRoutes = new Hono();
 
-export const  authenticationRoutes = new Hono();
-
+// Sign-up endpoint (POST instead of GET as per REST conventions)
 authenticationRoutes.post("/sign-up", async (context) => {
-  const { username, password } = await context.req.json();
-
   try {
-    const result = await signUpWithUsernameAndpassword({
+    const { username, password, name } = await context.req.json();
+
+    if (!username || !password) {
+      return context.json(
+        {
+          message: "Username and password are required",
+        },
+        400
+      );
+    }
+
+    const result = await signUpWithUsernameAndPassword({
       username,
       password,
+      name,
     });
 
     return context.json(
       {
-        data: result,
+        data: {
+          token: result.token,
+          user: {
+            id: result.user.id,
+            username: result.user.username,
+            name: result.user.name,
+          },
+        },
       },
       201
     );
@@ -24,26 +47,36 @@ authenticationRoutes.post("/sign-up", async (context) => {
     if (e === SignUpWithUsernameAndPasswordError.CONFLICTING_USERNAME) {
       return context.json(
         {
-          message: "User name already exists",
+          message: "Username already exists",
         },
         409
       );
     }
 
-    if (e === SignUpWithUsernameAndPasswordError.UNKNOWN) {
-      return context.json(
-        {
-          message: "Unknown",
-        },
-        500
-      );
-    }
+    console.error("Sign-up error:", e);
+    return context.json(
+      {
+        message: "Internal Server Error",
+      },
+      500
+    );
   }
 });
 
+// Log-in endpoint (POST instead of GET as per REST conventions)
 authenticationRoutes.post("/log-in", async (context) => {
   try {
     const { username, password } = await context.req.json();
+
+    if (!username || !password) {
+      return context.json(
+        {
+          message: "Username and password are required",
+        },
+        400
+      );
+    }
+
     const result = await logInWithUsernameAndPassword({
       username,
       password,
@@ -51,14 +84,19 @@ authenticationRoutes.post("/log-in", async (context) => {
 
     return context.json(
       {
-        data: result,
+        data: {
+          token: result.token,
+          user: {
+            id: result.user.id,
+            username: result.user.username,
+            name: result.user.name,
+          },
+        },
       },
-      201
+      200
     );
   } catch (e) {
-    if (
-      e === LogInWithUsernameAndPasswordError.INCORRECT_USERNAME_OR_PASSWORD
-    ) {
+    if (e === LogInWtihUsernameAndPasswordError.INCORRECT_USERNAME_OR_PASSWORD) {
       return context.json(
         {
           message: "Incorrect username or password",
@@ -66,9 +104,11 @@ authenticationRoutes.post("/log-in", async (context) => {
         401
       );
     }
+
+    console.error("Log-in error:", e);
     return context.json(
       {
-        message: "Unknown",
+        message: "Internal Server Error",
       },
       500
     );
